@@ -1,0 +1,15 @@
+---
+  3cx_wallboard_host: somehost.com
+  3cx_wallboard_port: "5000"
+  3cx_websocket_port: "4516"
+  username: "some_user_extension_number"
+  password: password
+  queue: "queue_id"
+  loginbutton: "Log In"
+  dashing_url: dashing_host_with_port
+  auth_token: YOUR_AUTH_TOKEN
+  widgets:
+    - name: dashing_widget_id_#1
+      wallboard: id_of_selected_position_in_wallboard_#1
+    - name: dashing_widget_id_#2
+      wallboard: id_of_selected_position_in_wallboard_#2
