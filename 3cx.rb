@@ -4,13 +4,16 @@ require 'eventmachine'
 require 'permessage_deflate'
 require 'json'
 require 'httparty'
+require 'websocket/extensions'
 
 config_file = ARGV[0]
 settings = YAML.load_file(config_file)
 wallboard_url = settings["3cx_wallboard_host"]+":"+settings["3cx_wallboard_port"]
 wallboard_ws = settings["3cx_wallboard_host"]+":"+settings["3cx_websocket_port"]
+queue = {"key" => "QueueID", "value" => settings["queue"]}
 
 agent = Mechanize.new
+agent.user_agent_alias = 'Mac Safari'
 agent.get("http://#{wallboard_url}/Wallboard/Account/Login.aspx") do | home_page |
   login_form = home_page.form_with(:id => "LoginForm")
   @params = Hash.new
@@ -24,11 +27,12 @@ end
   cookies = agent.cookie_jar.store.map {|i| i}
 EM.run {
   url="ws://#{wallboard_ws}/Wallboard"
-  ws = Faye::WebSocket::Client.new(url, [],
-    :headers    => {'Origin' => "http://#{wallboard_url}", 'Connection' => 'Upgrade', 'Cookie' => cookies.join(';') },
-    :extensions => [PermessageDeflate]
-  )
+  ws = Faye::WebSocket::Client.new(url, [], :headers => { 'Cookie' => cookies.join(';')})
+  ws.onopen do |event|
+    ws.send queue.to_json
+  end
   ws.on :message do |event|
+    p [event.data]
     if JSON.parse(event.data)["key"] != "KeepAlive"
       settings["widgets"].each do |widget|
         puts JSON.parse(JSON.parse(event.data)["value"])["#{widget['wallboard']}"]["Value"]
